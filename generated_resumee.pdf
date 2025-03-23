@@ -1,0 +1,1 @@
+{"detail":[{"type":"missing","loc":["body","resume_file"],"msg":"Field required","input":null},{"type":"missing","loc":["body","job_description"],"msg":"Field required","input":null}]}
