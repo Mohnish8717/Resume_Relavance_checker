@@ -173,7 +173,7 @@ Time Series SPSS, Demetra+
 Forecasts based on exponential smoothing, ARIMA, and transfer function (using petrol price as independent variable) models.
 
 """
-    model_name = "deepseek-coder" if use_deepseek else "llama3"
+    model_name ="llama3"
     response = ollama.chat(model=model_name, messages=[{"role": "user", "content": llm_prompt}])
     llm_text = response["message"]["content"]
 

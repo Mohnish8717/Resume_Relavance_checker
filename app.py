@@ -1,10 +1,12 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from jinja2 import Environment, FileSystemLoader
 from resumeparser import process_resume
 from contentgenerator import match_resume_to_job_description
 from xhtml2pdf import pisa
 import os
+from pathlib import Path
 
 TEMPLATE_DIR = "templates"
 OUTPUT_DIR = "/tmp/generated"
@@ -12,8 +14,14 @@ UPLOAD_DIR = "/tmp/uploads"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or ["*"] for all origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def convert_html_to_pdf(source_html: str, output_path: str) -> bool:
     with open(output_path, "wb") as output_file:
@@ -49,13 +57,18 @@ async def generate_resume(
         html_content = template.render(candidate=parsed_data.get("name", "Candidate"), sections=match_results)
 
         # Step 4: Convert to PDF
-        output_pdf_path = os.path.join(OUTPUT_DIR, f"{resume_file.filename}_resume.pdf")
+        filename_stem = Path(resume_file.filename).stem
+        output_pdf_path = os.path.join(OUTPUT_DIR, f"{filename_stem}_tailored_resume.pdf")
         success = convert_html_to_pdf(html_content, output_pdf_path)
         if not success:
             raise HTTPException(status_code=500, detail="Failed to generate PDF.")
 
-        return FileResponse(output_pdf_path, filename="tailored_resume.pdf", media_type="application/pdf")
+        return FileResponse(
+            output_pdf_path,
+            filename="tailored_resume.pdf",
+            media_type="application/pdf",
+            headers={"Content-Disposition": "inline; filename=tailored_resume.pdf"}
+        )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating resume: {str(e)}")
-    
